@@ -5,7 +5,7 @@ GAASM jest częścią "Project CPU Grasol Architectur" gdzie główną części�
 Pisanie programów jak i kompilacja, będzie się odbywać na współczesnym komputerze.
 Z procesorem komunikacja będzie się odbywać przez Arduino, w którym będzie sterownik do CPU. 
 
-Code (grasol asm) -> Compiler GAASM -> Driver (Arduino) <-> Grasol CPU or RAM
+<p>Code (grasol asm) -> Compiler GAASM -> Driver (Arduino) <-> Grasol CPU or RAM</p>
 [schemat głównego założenia całego projektu]
 
 Procesor będzie miał tylko rejestry, dlatego wymagane jest zbudowanie osobno RAMu.
