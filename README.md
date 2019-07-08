@@ -2,7 +2,7 @@
 <h3>Compiler Grasol Architecture Asembler by Grasol 2019</h3>
 
 GAASM jest częścią "Project CPU Grasol Architectur" gdzie główną częścią projektu jest zbudowanie działającego CPU.
-Pisanie programów jak i kompilacja, będzie się odbywać na współczesnym komputerze.
+Pisanie programów jak i kompilacja, będzie odbywać się na współczesnym komputerze.
 Z procesorem komunikacja będzie się odbywać przez Arduino, w którym będzie sterownik do CPU. 
 
 <p>Code (grasol asm) -> Compiler GAASM -> Driver (Arduino) <-> Grasol CPU or RAM
