@@ -14,4 +14,4 @@ np: wyświetlacza itp
 
 Kompilator GAASM pisany jest w Pythonie 3
 
-Cały spis komend oraz dokładnych opisów działań danych elemntów będzie można znaleść w MANUAL-GRASOL-CPU.pdf (GAASM, DRIVER ARDUINO, CPU).
+Cały spis instrukcji oraz dokładnych opisów działań danych elemntów będzie można znaleść w MANUAL-GRASOL-CPU.pdf (GAASM, DRIVER ARDUINO, CPU).
