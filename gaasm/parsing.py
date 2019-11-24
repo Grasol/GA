@@ -10,95 +10,376 @@
 #[xx][xxx][xxx]
 #00-normal 01-mode 10-reserved 11-reserved 
 
+def tohex(n):
+	try:
+		if n[-1:] == "h":
+			n = n[:-1]
+			n = int(n,16)
+		elif n[-1:] == "b":
+			n = n[:-1]
+			n = int(n, 2)
+		else:
+			n = int(n)
+	except:
+		n = "error"
 
+	return n
 
-class OutputParsing():
-	def __init__(self, ln):
-		self.output = bytearray(0)
-		self.ln = ln
-		self.opcode = opcode_return()
-		self.reg8 = ["ra","rb","rc","rd","re","sp","rx","ry","sph","rxh","ryh"]
-		self.reg8h = ["sph","rxh","ryh"]
-		self.reg16 = ["wsp","wrx","wry"]
+def lenn(lst):
+	x = 0
+	for l in lst:
+		if l != None:
+			x += 1
+	return x
 
-		self.A = None
-		self.B = None
-		self.C = None
-		self.imm = None
-		self.disp = None
-
-	def instruction_token(self, mnec, n):
-		self.mnec = mnec
-		if self.mnec in self.opcode:
-			self.insttuple = self.opcode[self.mnec]
-			return 0
-		print("Error in line %i: bad instruction: %s" % (self.ln[n], self.mnec))
-		return 10
-
-
-	def operand_tokens(self, tokens, n):
-		if self.insttuple[1] == 0:
-			return False
-
-		if self.insttuple[1] == 1:
-			self.A = tokens.pop()
-			if self.mnec != tokens.pop():
-				print("Error in line %i: bad syntax" % self.ln[n])
-				return True
-			return False
-
-		if self.insttuple[1] == 2:
-			self.A = tokens.pop()
-			if "," == tokens.pop():
-				self.B = tokens.pop()
-				if self.mnec != tokens.pop():
-					print("Error in line %i: bad syntax" % self.ln[n])
-					return True
-				return False
-
-		if self.insttuple[1] == 3:
-			pass
-		return False
 	
+class OutputParsing():
+	def __init__(self):
+		self.byte = bytearray(0)
+		self.err = []
 
-	def address_token(self):
-		pass
+	def reset(self, ln ,n):
+		self.ln = ln
+		self.n = n 
+		self.opcode = opcode_return()
+		self.reg8 = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7,"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
+		self.reg8n = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7}
+		self.reg8hh = {"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
+		self.reg8h = {"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3}
+		self.reg16 = {"wra":0x0,"wrd":0x1,"wre":0x2,"wrc":0x3,"wrc":0x4,"wsp":0x5,"wrx":0x6,"wry":0x7}
+		self.a = [None,None,None]
+		self.pa = 0
+		self.chkt = 0
+		self.mnec = None
+		self.tupple = None
+		self.imm = None
+		self.rmode = None
 
-	def argumet_byte(self):
-		if self.A not in self.reg8:
-			return True
-			if self.B not in self.reg8:
+	def put_tokens(self, d):
+		nt = 0
+		for token in d:
+			nt += 1
+			if self.mnec == None:
+				self.mnec = token
+				continue
+			if token == ",":
+				if nt == 3 or nt == 5:
+					self.pa += 1
+					continue
+				self.err.append("Error in line %i: Syntax"%(self.ln[self.n]))
 				return True
 
-		print("hello world")
+			if nt == 2 or nt == 4 or nt == 6: 	
+				self.a[self.pa] = (token)
+				continue
+			self.err.append("Error in line %i: Syntax"%(self.ln[self.n]))
+			return True
 		
+		return False
+
+	def check_instruction(self):
+		if self.mnec in self.opcode:
+			self.tupple = self.opcode[self.mnec]
+			return False
+
+		self.err.append("Error in line %i: %s: bad instruction"%(self.ln[self.n],self.mnec))
+		return True
+
+	def check_arguments(self):
+		#self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],self.a[0]))
+		narg = 0	
+		self.rmode = None	
+		self.type = "8"		
+		if self.tupple[1] == 0: # 0 ARGUMENTS
+			for at in self.a:
+
+				if at == None:
+					continue
+				else:
+					self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+					break
+
+		elif self.tupple[1] == 1 or self.tupple[1] == 8: # 1 ARGUMENTS
+			for at in self.a:
+
+				if narg == 0 and self.tupple[1] == 1: 
+					narg += 1
+					if at in self.reg8:
+						if at in self.reg8hh:
+							self.rmode = "Mnh"
+						else:
+							self.rmode = "Mn"
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+				elif narg == 0 and self.tupple == 8:
+					narg += 1
+					if tohex(at) != "error":
+						self.a[0] == tohex(at)
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+
+				elif narg != 0:
+					if at == None:
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+		
+		elif self.tupple[1] == 2 or self.tupple[1] == 3: # 2 or 3 ARGUMENTS
+			for at in self.a:
+				print(at, narg)
+				if narg == 0:
+					narg += 1
+					if at in self.reg8:
+						if at in self.reg8h:
+							self.rmode = "H"
+							continue
+						if at in self.reg8hh:
+							self.rmode = "HH"
+							continue
+						if at in self.reg8n:
+							if at in ["ra","rd","re","rc"]:
+								self.rmode = "n"
+							else:
+								self.rmode = "N"
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+
+				elif narg == 1:
+					narg += 1
+					if at in self.reg8:
+						if self.rmode == "H":
+							if at in self.reg8n:
+								continue
+							if at in self.reg8hh:
+								self.rmode = "HH"
+								continue
+						if self.rmode == "HH":
+							if at not in self.reg8hh:
+								self.err.append("Error in line %i: You can't usege this register: %s"%(self.ln[self.n],at))
+								break
+							continue
+						if self.rmode == "N" or self.rmode == "n":
+							if at in self.reg8n:
+								self.rmode = "N"
+								continue
+							if at in self.reg8hh:
+								if self.rmode == "n":
+									self.rmode = "H"
+									continue
+								else:
+									self.err.append("Error in line %i: You can't usege this register: %s"%(self.ln[self.n],at))
+									break
+
+					elif tohex(at) != "error":
+						self.a[1] = tohex(at)
+						if self.a[1] >= 256:
+							self.err.append("Error in line %i: Number %i is to big"%(self.ln[self.n],self.a[1]))
+							break
+						if self.rmode == "H":
+							self.rmode = "Mih"
+						else:
+							self.rmode = "Mi"
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+				elif narg == 2 and self.tupple[1] == 2:
+					if at == None:
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+				elif narg == 2 and self.tupple[1] == 3:
+					if tohex(at) != "error":
+						self.imm = tohex(at)
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+		elif self.tupple[1] == 22: # 2 WORD ARGUMENTS 
+			self.type = "16"
+			for at in self.a:
+				if narg == 0:
+					narg += 1
+					if at in self.reg16:
+						self.rmode = "N"
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+
+				if narg == 1:
+					narg += 1
+					if at in self.reg16:
+						continue
+					elif tohex(at) != "error":
+						self.a[1] = tohex(at)
+						if self.a[1] >= 65536:
+							self.err.append("Error in line %i: Number %i is to big"%(self.ln[self.n],self.a[1]))
+							break
+						self.rmode = "Mi"
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+				elif narg == 2:
+					if at == None:
+						continue
+					else:
+						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+						break
+
+		elif self.tupple[1] == 4 or self.tupple[1] == 5:
+			pass
+
+		elif self.tupple[1] == 9:
+			pass
+
+
+	def byte_out(self):
+		print(self.rmode)
+		imm2 = None
+		self.byte.append(self.tupple[0])
+		if self.type == "8":
+			if self.rmode == "N":
+				self.rmode = 0
+				r1 = self.reg8n[self.a[0]]
+				r2 = self.reg8n[self.a[1]]
+	
+			if self.rmode == "Mn":
+				self.rmode = 1
+				print(self.tupple[0] ,self.a)
+				r1 = self.reg8n[self.a[0]]
+				r2 = 0
+	
+			if self.rmode == "Mi":
+				self.rmode = 1
+				r1 = self.reg8n[self.a[0]]
+				r2 = 1
+				self.imm = self.a[1]
+	
+			if self.rmode == "Mnh":
+				self.rmode = 1
+				r1 = self.reg8hh[self.a[0]]
+				r2 = 4
+	
+			if self.rmode == "Mih":
+				self.rmode = 1
+				r1 = self.reg8hh[self.a[0]]
+				r2 = 5
+				self.imm = self.a[1]
+	
+			if self.rmode == "H":
+				self.rmode = 2
+				r1 = self.reg8[self.a[0]]
+				r2 = self.reg8[self.a[1]]
+	
+			if self.rmode == "HH":
+				self.rmode = 3
+				r1 = self.reg8hh[self.a[0]]
+				r2 = self.reg8hh[self.a[1]]
+
+		if self.type == "16":
+			if self.rmode == "N":
+				self.rmode = 0
+				r1 = self.reg16[self.a[0]]
+				r2 = self.reg16[self.a[1]]
+
+			if self.rmode == "Mi":
+				self.rmode = 1
+				r1 = self.reg16[self.a[0]]
+				r2 = 1
+				self.a[1] = hex(self.a[1]) + "00"
+				self.imm = self.a[1][2:4]
+				imm2 = self.a[1][4:6]
+
+		print(self.rmode,r1,r2)
+		print(self.imm,imm2)
+		self.byte.append(self.rmode<<6 | r1<<3 | r2)
+		if self.imm != None:
+			self.byte.append(self.imm)
+		if imm2 != None: 
+			self.byte.append(imm2)
+
+		print("->",self.byte)
+
+	def dyrectives(self, asmline):
+		if asmline[0][0:2] == "db":
+			del asmline[0]
+			print(asmline,"ASASAS")
+			asmline = ' '.join(asmline)
+			asmline = asmline.split(",")
+			print(asmline,"ASMLINE")
+			for token in asmline:
+				if token[0] == '"' and token[-2] == '"':
+					token = token[1:-1]
+					print("TOKENTOKEN",token)
+					self.byte.extend(map(ord, token))
+					continue
+
+				if tohex(token) == "error":
+					self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],token))
+					break
+				self.byte.append(tohex(token))
+			return True
+		return False
+				
 
 
 
-	def imm_token(self):
-		pass
+	def get_out(self):
+		print("--->",self.byte)
+		return (self.err, self.byte)
+
+	def q_err(self):
+		if len(self.err) == 0:
+			return True
+		return False
+
+
+
+
+
+
+
+
 	
 
 def parsing_control(data, ln):
 	n = -1
+	outp = OutputParsing()
 	for d in data:
 		n += 1
-		outp = OutputParsing(ln)
-		tokennum = 0
-
+		outp.reset(ln,n)
 		d = d.split()
-		argmode = outp.instruction_token(d[0],n)
-		if argmode == 10:
+		if outp.dyrectives(d):
 			continue
-		
 
-		d.reverse()
-		mnec = d.pop()
-		d.insert(0, mnec)
-		if outp.operand_tokens(d,n):
+		if outp.put_tokens(d):
 			continue
-		outp.argumet_byte()
 
+		if outp.check_instruction():
+			continue
+
+		if outp.check_arguments():
+			continue
+
+		if outp.q_err():
+			outp.byte_out()
+
+
+	try:
+		return outp.get_out()
+	except:
+		return
  
 
 				
@@ -115,10 +396,17 @@ def parsing_control(data, ln):
 
 
 def opcode_return():
-	# mnemonik | opcode | (0-brak argumentów) (1-1 argument oper) (2-2 argumenty oper) (3-3 argumeny oper+imm)(4-adres)(5-adres+disp)(8-imm)(9-label)
-	# reg: ra-0, rd-1, rb-2, rc-3, re-4, sp-5, rx-6, ry-7
+	# 0 - brak argumentów
+	# 1 - M nope
+	# 2 - N/M/H
+	# 3 - N/M/H + imm
+	# 4 - adres
+	# 5 - adres + disp
+	# 8 - imm
+	# 9 - label 
+	# 22 - word N
 
-	instrOpcode = {"mov" :(0x00, 2),#a = b
+	instrOpcode = {"mov" :(0x00, 2,0x02, 22),#a = b
                  "lea" :(0x01, 2),#reg = address
                  "ldr" :(0x03, 4),#[reg]
                  "str" :(0x04, 4),#[reg]
@@ -127,15 +415,16 @@ def opcode_return():
                  "xchg":(0x09, 2), #a = b, b = a
                  "crl" :(0x0A, 2), #load control reg
                  "crs" :(0x0B, 2), #store control reg
+                 "bcw" :(0x0C, 1), #byte reg conver word reg
 
                  "add" :(0x10, 2),#a += b 
                  "sub" :(0x11, 2),#a -= b 
                  "inc" :(0x12, 1),#a++
                  "dec" :(0x13, 1),#a--
-                 "mul" :(0x14, 1),#A:D = a * A 
-                 "div" :(0x15, 1),#A:D = a / A 
-                 "imul":(0x16, 1,0x22, 2,0x23, 3),#A:D = a * A, a *= b, a = b * imm
-                 "idiv":(0x17, 2),#A:D = a / b
+                 "mul": (0x14, 2),#WAH = a * b
+                 "div": (0x15, 2),#WAH = a / b
+                 "muls":(0x16, 1, 0x2B, 2),#WAH = a * A, WAH = a * b signed mul
+                 "divs":(0x17, 2),#WAH = a / b signed div
                  "or"  :(0x18, 2),#a |= b
                  "and" :(0x19, 2),#a &= b
                  "xor" :(0x1A, 2),#a ^= b
@@ -147,12 +436,14 @@ def opcode_return():
                  "sar" :(0x1F, 2),#+-a>> 
                  "cmp" :(0x20, 2),#a-b
                  "test":(0x21, 2),#a && b
-                 "rol" :(0x24, 2),#rotation left 
-                 "ror" :(0x25, 2),#rotation right 
-                 "adc" :(0x26, 2),#add with carry
-                 "sbb" :(0x27, 2),#add witch borrow
-                 "rcr" :(0x28, 2),
-                 "rcl" :(0x29, 2),
+                 "rol" :(0x22, 2),#rotation left 
+                 "ror" :(0x23, 2),#rotation right 
+                 "adc" :(0x24, 2),#add with carry
+                 "sbb" :(0x25, 2),#add witch borrow
+                 "rcr" :(0x26, 2),
+                 "rcl" :(0x27, 2),
+                 "addi":(0x28, 3),# a = b + imm
+                 "subi":(0x29, 3),# a = b - imm
 
                  "push":(0x30, 1),#a -> top stack
                  "pop" :(0x31, 1),#a = top stack
@@ -163,7 +454,7 @@ def opcode_return():
                  "btr" :(0x43, 2),#bit test reset
                  "bsf" :(0x44, 2),#bit scan forward
                  "bsr" :(0x45, 2),#bit scan revers 
-                 "lebg":(0x46,1),#swap little endian <-> big endian
+                 "lebg":(0x46, 1),#swap little endian <-> big endian
                  "scf" :(0x47, 0),#set carry flag
                  "rcf" :(0x48, 0),#reset carry flag
                  "lrf" :(0x49, 1),#load rf
@@ -192,21 +483,21 @@ def opcode_return():
                  "jl"  :(0x62, 9),#jump if less (SF != OF)
                  "jle" :(0x63, 9),#jump if less or equal (ZF == 1 SF != OF)
                  "jmp" :(0x64, 9),#jump
-                 "jmpr":(0x69, 1),
-                 "call":(0x65, 9),#call
-                 "callr":(0x68,1),
+                 "call":(0x65, 9,),#call
                  "ret" :(0x66, 0),#return
                  "loop":(0x67, 9),#loop
+                 "callr":(0x68,1),
+                 "jmpr":(0x69, 1),
 
                  "wait":(0x80, 0),#wait						    
                  "int" :(0x81, 8),#interrupt
                  "intr" :(0x82, 1),#interrupt (reg)
                  "iret":(0x83, 0),#interrupt return 
-                 "hlt" :(0x84, 0),#halt
+                 "halt" :(0x84, 0),#halt
                  "nop" :(0x86, 0),#nothing 
                  "cpuid":(0x8C,0),#CPU ID
-                 "in"  :(0x8E, 2),#in port
-                 "out" :(0x8F, 2),#out port
+                 "in"  :(0x90, 2),#in port
+                 "out" :(0x91, 2),#out port
 
                  "end":(0xFF, 0)} #end program (interrupt)
 
