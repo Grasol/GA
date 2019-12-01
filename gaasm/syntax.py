@@ -1,71 +1,69 @@
-
+import string
 
 class Syntax():
 	def __init__(self, data):
-		syx = syntax_processing(data)
-		self.procdata = syx[0]
-		self.lnlist = syx[1]
-		self.err = syx[2]
+		self.charlist = string.ascii_letters + string.digits + "_.!:"
+		self.expressionchars = "~@$%^&*()-=+|<>"
+		self.comment = False
+		self.outdata = []
+		self.line = []
+		self.token = ""
+		self.continuity = False
+		self.ln = 1
+		self.lnlist = []
+
+		self.syntax_processing(data)
 
 	def get_ln(self):
 		return self.lnlist
 	
 	def get_data(self):
-		return self.procdata
+		return self.outdata
 
 	def get_err(self):
 		return self.err
 
-def syntax_processing(data):
-	data += "\n"
-	procdata = []
-	ln = 1
-	lnlist = []
-	a = ""
-	commentloop = False
-	parenthesis = 0
-	err = []
+	def syntax_processing(self, data):
+		data += "\n"
+		for char in data:
+			if self.comment == True and char != "\n":
+				continue
 
-	for d in data:
-		if commentloop == True and d != "\n":
-			continue
-	
-		if d == "[" and parenthesis == 0 or d == "[" and parenthesis == 1:
-			parenthesis += 1
-			a += " [ "
-			continue
-		elif d == "[" and parenthesis >= 2:
-			err.append("Error in line %i: bad syntax: '['" %ln)
-	
-		if d == "]" and parenthesis == 1 or d == "]" and parenthesis == 2:
-			parenthesis -= 1
-			a += " ] "
-			continue
-		elif d == "]" and parenthesis <= 0:
-			err.append("Error in line %i: bad syntax: ']'" %ln)
-	
-		if d == "," or d == "+":
-			a += " %c "%d
-			continue
-	
-		if d == "\n":
-			if parenthesis > 0:
-				err.append("Error in line %i: don't close parenthesis"%ln)
+			elif self.sting == True and char !- '"':
+				self.token += char
 
-			if a != "" and parenthesis == 0:
-				lnlist.append(ln)
-				procdata.append(a)
-			
-			commentloop = False
-			parenthesis = 0
-			a = ""
-			ln += 1
-			continue
-	
-		if d == "#":
-			commentloop = True
-			continue
-	
-		a += d
-	return (procdata, lnlist, err)
+			if char not in charlist:
+				if self.continuity == True and self.token != "":
+					self.line.append(self.token)
+					self.continuity = False
 
+				if char == "\n":
+					self.nline() #TODO: nline()
+					continue
+
+				if char == '"':
+					self.string()
+					continue
+
+				if char == "#"
+					self.comment = True
+
+				if char == "[" or char == "]":
+					self.bracket()
+					continue
+
+				#TODO: expression chars 
+				continue
+
+			self.continuity = True
+			self.token += char 
+			continue
+
+	def nline():
+		self.outdata(self.line)
+		self.lnlist.append(self.ln)
+		self.ln += 1
+		self.comment = False
+		self.continuity = False
+		self.token = ""
+		self.line = []

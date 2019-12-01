@@ -9,6 +9,7 @@
 #
 #[xx][xxx][xxx]
 #00-normal 01-mode 10-reserved 11-reserved 
+from enum import Enum
 
 def tohex(n):
 	try:
@@ -25,224 +26,215 @@ def tohex(n):
 
 	return n
 
-def lenn(lst):
-	x = 0
-	for l in lst:
-		if l != None:
-			x += 1
-	return x
-
+def pindex():
 	
-class OutputParsing():
+
+class TokenType(Enum):
+	LABEL = 0
+	LABEL_CHAR = 1
+	IDENTIFIER = 2
+	EXPRESSION = 3
+	DYRECTIVE = 4
+	REGISTER_8 = 5
+	REGISTER_16 = 6
+	REGISTER_8h = 7
+	IMMEDIATE_VALUE = 8
+	IMMEDIATE_VALUE2 = 9
+	REG_ADDRESS = 10
+	DISP_ADDRESS = 11
+	DISP2_ADDRESS = 12
+	DOUBLE_REG_ADDRESS = 13
+	DOUBLE_DISP_ADDRESS = 14
+	DOUBLE_DISP2_ADDRESS = 15
+	LITERAL_STRING = 16
+	LITERAL_HEX = 17
+
+
+class Tokens_Parser():
 	def __init__(self):
-		self.byte = bytearray(0)
-		self.err = []
-
-	def reset(self, ln ,n):
-		self.ln = ln
-		self.n = n 
 		self.opcode = opcode_return()
-		self.reg8 = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7,"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
-		self.reg8n = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7}
-		self.reg8hh = {"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
-		self.reg8h = {"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3}
+		self.reg8 = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7}
+		self.reg8h = "rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
 		self.reg16 = {"wra":0x0,"wrd":0x1,"wre":0x2,"wrc":0x3,"wrc":0x4,"wsp":0x5,"wrx":0x6,"wry":0x7}
-		self.a = [None,None,None]
-		self.pa = 0
-		self.chkt = 0
-		self.mnec = None
-		self.tupple = None
-		self.imm = None
-		self.rmode = None
+		self.ltokens = []
 
-	def put_tokens(self, d):
-		nt = 0
-		for token in d:
-			nt += 1
-			if self.mnec == None:
-				self.mnec = token
-				continue
-			if token == ",":
-				if nt == 3 or nt == 5:
-					self.pa += 1
-					continue
-				self.err.append("Error in line %i: Syntax"%(self.ln[self.n]))
-				return True
+	def start_parsing(self, lines):
+		i = 0
+		for line in lines
+			if self.first_element(line[0]):
+				pass #ERR
 
-			if nt == 2 or nt == 4 or nt == 6: 	
-				self.a[self.pa] = (token)
-				continue
-			self.err.append("Error in line %i: Syntax"%(self.ln[self.n]))
-			return True
-		
-		return False
+			self.second_element(line[1:], i)
+			i += 1
 
-	def check_instruction(self):
-		if self.mnec in self.opcode:
-			self.tupple = self.opcode[self.mnec]
+	def first_element(self, t):
+		if t in self.opcode:
+			self.ltokens.append([TokenType.IDENTIFIER, t])
 			return False
 
-		self.err.append("Error in line %i: %s: bad instruction"%(self.ln[self.n],self.mnec))
-		return True
+		if t[0] == ":" or t[0] == ".":
+			self.ltokens.append([TokenType.LABEL_CHAR, t])
+			self.ltokens.append([TokenType.LABEL, t[1:]])
+			return False
 
-	def check_arguments(self):
-		#self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],self.a[0]))
-		narg = 0	
-		self.rmode = None	
-		self.type = "8"		
-		if self.tupple[1] == 0: # 0 ARGUMENTS
-			for at in self.a:
+		if t[0] == "!":
+			if t[1:] == "org"
+				self.ltokens.append([TokenType.DYRECTIVE, t[1:]])
+				return False
+			else:
+				pass #ERR
 
-				if at == None:
-					continue
-				else:
-					self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-					break
+		if t in ["db","dw","dd","dq"]:
+			self.ltokens([TokenType.DYRECTIVE, t])
+			return False
 
-		elif self.tupple[1] == 1 or self.tupple[1] == 8: # 1 ARGUMENTS
-			for at in self.a:
+		#ERR
 
-				if narg == 0 and self.tupple[1] == 1: 
-					narg += 1
-					if at in self.reg8:
-						if at in self.reg8hh:
-							self.rmode = "Mnh"
-						else:
-							self.rmode = "Mn"
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
 
-				elif narg == 0 and self.tupple == 8:
-					narg += 1
-					if tohex(at) != "error":
-						self.a[0] == tohex(at)
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+	def second_element(self, elements, i):
+		for t in elements:
+			if t in self.reg8:
+				self.ltokens[i].append(TokenType.REGISTER_8, t)
 
-				elif narg != 0:
-					if at == None:
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
-		
-		elif self.tupple[1] == 2 or self.tupple[1] == 3: # 2 or 3 ARGUMENTS
-			for at in self.a:
-				print(at, narg)
-				if narg == 0:
-					narg += 1
-					if at in self.reg8:
-						if at in self.reg8h:
-							self.rmode = "H"
-							continue
-						if at in self.reg8hh:
-							self.rmode = "HH"
-							continue
-						if at in self.reg8n:
-							if at in ["ra","rd","re","rc"]:
-								self.rmode = "n"
-							else:
-								self.rmode = "N"
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+			elif t in self.reg8h:
+				self.ltokens[i].append(TokenType.REGISTER_8h, t)
 
-				elif narg == 1:
-					narg += 1
-					if at in self.reg8:
-						if self.rmode == "H":
-							if at in self.reg8n:
-								continue
-							if at in self.reg8hh:
-								self.rmode = "HH"
-								continue
-						if self.rmode == "HH":
-							if at not in self.reg8hh:
-								self.err.append("Error in line %i: You can't usege this register: %s"%(self.ln[self.n],at))
-								break
-							continue
-						if self.rmode == "N" or self.rmode == "n":
-							if at in self.reg8n:
-								self.rmode = "N"
-								continue
-							if at in self.reg8hh:
-								if self.rmode == "n":
-									self.rmode = "H"
-									continue
-								else:
-									self.err.append("Error in line %i: You can't usege this register: %s"%(self.ln[self.n],at))
-									break
+			elif t in self.reg16:
+				self.ltokens[i].append(TokenType.REGISTER_16, t)
 
-					elif tohex(at) != "error":
-						self.a[1] = tohex(at)
-						if self.a[1] >= 256:
-							self.err.append("Error in line %i: Number %i is to big"%(self.ln[self.n],self.a[1]))
-							break
-						if self.rmode == "H":
-							self.rmode = "Mih"
-						else:
-							self.rmode = "Mi"
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
+			elif tohex(t) != "error":
+				self.ltokens[i].append(TokenType.IMMEDIATE_VALUE, tohex(t))
 
-				elif narg == 2 and self.tupple[1] == 2:
-					if at == None:
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
+			elif t[0] == "[" and t[-1] == "]":
+				address_argument(t, i)
 
-				elif narg == 2 and self.tupple[1] == 3:
-					if tohex(at) != "error":
-						self.imm = tohex(at)
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
+			elif t[0] == '"' and t[-1] == '"':
+				self.ltokens[i].append(TokenType.LITERAL_STRING, t[1:-1])
 
-		elif self.tupple[1] == 22: # 2 WORD ARGUMENTS 
-			self.type = "16"
-			for at in self.a:
-				if narg == 0:
-					narg += 1
-					if at in self.reg16:
-						self.rmode = "N"
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
+			else:
+				self.ltokens[i].append(TokenType.EXPRESSION, t)
 
-				if narg == 1:
-					narg += 1
-					if at in self.reg16:
-						continue
-					elif tohex(at) != "error":
-						self.a[1] = tohex(at)
-						if self.a[1] >= 65536:
-							self.err.append("Error in line %i: Number %i is to big"%(self.ln[self.n],self.a[1]))
-							break
-						self.rmode = "Mi"
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
+	def address_argument(self, t, i):
+		addr = 0
+		if t[0:1] == "[[" and t[-2:-1] == "]]":
+			t = t[2:-2]
+			addr = 2
 
-				elif narg == 2:
-					if at == None:
-						continue
-					else:
-						self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],at))
-						break
+		elif t[0] == "[" and t[-1] == "]":
+			t = t[1:-1]
+			addr = 1
 
-		elif self.tupple[1] == 4 or self.tupple[1] == 5:
+		templ = []
+		string = ""
+		for char in t:
+			if char == "+":		
+				templ.append(self.address_element(string))
+				continue
+			string += char
+
+		REGISTER = []
+		DISP = []
+		LABEL = []
+		expr = False
+		for t in templ:
+			if t[0] == TokenType.REGISTER_16 or t[0] == TokenType.REGISTER_8 or t[0] == TokenType.REGISTER_8h:
+				REGISTER.append(t)
+
+			elif t[0] == TokenType.LITERAL_HEX:
+				if tohex(t[1]) < 256:
+					t[1] = tohex(t[1])
+					t[0] = TokenType.IMMEDIATE_VALUE
+				elif tohex(t[1]) < 2**16:
+					t[1] = tohex(t[1])
+					t[0] = TokenType.IMMEDIATE_VALUE2
+
+				DISP.append(t)
+
+			elif t[0] == TokenType.LABEL:
+				LABEL.append(t)
+
+		if len(REGISTER) > 1:
+			#TODO err
 			pass
 
-		elif self.tupple[1] == 9:
-			pass
+		if len(DISP) > 1 and len(LABEL) > 0: 
+			expr = True
 
+		if len(REGISTER) == 1 and len(DISP) == 0 and len(LABEL) == 0:
+			if addr == 1:
+				self.ltokens[i].append(TokenType.REG_ADDRESS)
+			elif addr == 2:
+				self.ltokens[i].append(TokenType.DOUBLE_REG_ADDRESS)
+			self.ltokens[i] += REGISTER[0]
+
+		elif len(DISP) == 1 and len(LABEL) == 0:
+			if DISP[0][0] == TokenType.IMMEDIATE_VALUE:
+				if addr == 1:
+					self.ltokens[i].append(TokenType.DISP_ADDRESS)
+				elif addr == 2:
+					self.ltokens[i].append(TokenType.DOUBLE_DISP_ADDRESS)
+			
+			elif DISP[0][0] == TokenType.IMMEDIATE_VALUE2:
+				if addr == 1:
+					self.ltokens[i].append(TokenType.DISP2_ADDRESS)
+				elif addr == 2:
+					self.ltokens[i].append(TokenType.DOUBLE_DISP2_ADDRESS)
+
+			if len(REGISTER) == 1:
+				self.ltokens[i] += REGISTER[0]
+			self.ltokens[i] += DISP[0]
+
+		else:
+			if addr == 1:
+				self.ltokens[i].append(TokenType.DISP2_ADDRESS)
+			elif addr == 2:
+				self.ltokens[i].append(TokenType.DOUBLE_DISP2_ADDRESS)
+
+			if len(REGISTER) == 1:
+				self.ltokens[i] += REGISTER[0]
+			self.ltokens[i].append(TokenType.EXPRESSION)
+			for d in DISP:
+				self.ltokens[i] += d
+			for l in LABEL:
+				self.ltokens[i] += l
+
+	def address_element(self, string):
+		if string in self.reg8:
+			return [TokenType.REGISTER_8, string]
+
+		if string in self.reg8h:
+			return [TokenType.REGISTER_8h, string]
+
+		if string in self.reg16:
+			return [TokenType.REGISTER_16, string]
+
+		if tohex(string) != "error":
+			return [TokenType.LITERAL_HEX, tokex(string)]
+
+		return [TokenType.LABEL, string]
+
+	def count_label(self):
+		pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ByteOutput():
+	
 
 	def byte_out(self):
 		print(self.rmode)
@@ -311,29 +303,7 @@ class OutputParsing():
 
 		print("->",self.byte)
 
-	def dyrectives(self, asmline):
-		if asmline[0][0:2] == "db":
-			del asmline[0]
-			print(asmline,"ASASAS")
-			asmline = ' '.join(asmline)
-			asmline = asmline.split(",")
-			print(asmline,"ASMLINE")
-			for token in asmline:
-				if token[0] == '"' and token[-2] == '"':
-					token = token[1:-1]
-					print("TOKENTOKEN",token)
-					self.byte.extend(map(ord, token))
-					continue
-
-				if tohex(token) == "error":
-					self.err.append("Error in line %i: Syntax: %s"%(self.ln[self.n],token))
-					break
-				self.byte.append(tohex(token))
-			return True
-		return False
-				
-
-
+	
 
 	def get_out(self):
 		print("--->",self.byte)
@@ -354,32 +324,7 @@ class OutputParsing():
 	
 
 def parsing_control(data, ln):
-	n = -1
-	outp = OutputParsing()
-	for d in data:
-		n += 1
-		outp.reset(ln,n)
-		d = d.split()
-		if outp.dyrectives(d):
-			continue
-
-		if outp.put_tokens(d):
-			continue
-
-		if outp.check_instruction():
-			continue
-
-		if outp.check_arguments():
-			continue
-
-		if outp.q_err():
-			outp.byte_out()
-
-
-	try:
-		return outp.get_out()
-	except:
-		return
+	
  
 
 				

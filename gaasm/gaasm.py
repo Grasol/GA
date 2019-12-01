@@ -39,13 +39,14 @@ class Assembler():
 		self.ln = self.synx.get_ln()
 		self.errs = self.synx.get_err()
 
-		self.out = parsing_control(self.data, self.ln)
+		"""self.out = parsing_control(self.data, self.ln)
 		self.errs += self.out[0]
 		self.errs.sort()
 		for er in self.errs:
 			print(er)
 
-		print(self.out[1])
+		print(self.out[1])"""
+		
 
 
 
