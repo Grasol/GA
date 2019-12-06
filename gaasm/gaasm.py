@@ -27,9 +27,9 @@ from parsing import *
 
 class Assembler():
 	def __init__(self, data):
-		self.data = data
 		self.output = bytearray(0)
 		self.synx = Syntax(data)
+		self.pars = Tokens_Parser()
 
 	def errasm(self,errs):
 		self.errs.append(errs)
@@ -38,6 +38,18 @@ class Assembler():
 		self.data = self.synx.get_data()
 		self.ln = self.synx.get_ln()
 		self.errs = self.synx.get_err()
+		
+		print("--------------------------------")
+		for l in range(len(self.data)) :
+			print(self.ln[l], self.data[l])
+
+		self.data = self.pars.start_parsing(self.data)
+	
+		for d in self.data:
+			print(d)
+		
+
+		#print(self.data)
 
 		"""self.out = parsing_control(self.data, self.ln)
 		self.errs += self.out[0]

@@ -27,6 +27,7 @@ def tohex(n):
 	return n
 
 def pindex():
+	pass
 	
 
 class TokenType(Enum):
@@ -54,18 +55,20 @@ class Tokens_Parser():
 	def __init__(self):
 		self.opcode = opcode_return()
 		self.reg8 = {"ra":0x0,"rd":0x1,"re":0x2,"rc":0x3,"rb":0x4,"sp":0x5,"rx":0x6,"ry":0x7}
-		self.reg8h = "rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
+		self.reg8h = {"rah":0x0,"rdh":0x1,"reh":0x2,"rch":0x3,"rbh":0x4,"sph":0x5,"rxh":0x6,"ryh":0x7}
 		self.reg16 = {"wra":0x0,"wrd":0x1,"wre":0x2,"wrc":0x3,"wrc":0x4,"wsp":0x5,"wrx":0x6,"wry":0x7}
 		self.ltokens = []
 
 	def start_parsing(self, lines):
 		i = 0
-		for line in lines
+		for line in lines:
 			if self.first_element(line[0]):
 				pass #ERR
 
 			self.second_element(line[1:], i)
 			i += 1
+
+		return self.ltokens
 
 	def first_element(self, t):
 		if t in self.opcode:
@@ -78,41 +81,41 @@ class Tokens_Parser():
 			return False
 
 		if t[0] == "!":
-			if t[1:] == "org"
+			if t[1:] == "org":
 				self.ltokens.append([TokenType.DYRECTIVE, t[1:]])
 				return False
 			else:
 				pass #ERR
 
 		if t in ["db","dw","dd","dq"]:
-			self.ltokens([TokenType.DYRECTIVE, t])
+			self.ltokens.append([TokenType.DYRECTIVE, t])
 			return False
 
 		#ERR
-
+		print(t)
 
 	def second_element(self, elements, i):
 		for t in elements:
 			if t in self.reg8:
-				self.ltokens[i].append(TokenType.REGISTER_8, t)
+				self.ltokens[i] += (TokenType.REGISTER_8, t)
 
 			elif t in self.reg8h:
-				self.ltokens[i].append(TokenType.REGISTER_8h, t)
+				self.ltokens[i] += (TokenType.REGISTER_8h, t)
 
 			elif t in self.reg16:
-				self.ltokens[i].append(TokenType.REGISTER_16, t)
+				self.ltokens[i] += (TokenType.REGISTER_16, t)
 
 			elif tohex(t) != "error":
-				self.ltokens[i].append(TokenType.IMMEDIATE_VALUE, tohex(t))
+				self.ltokens[i] += (TokenType.IMMEDIATE_VALUE, tohex(t))
 
 			elif t[0] == "[" and t[-1] == "]":
 				address_argument(t, i)
 
 			elif t[0] == '"' and t[-1] == '"':
-				self.ltokens[i].append(TokenType.LITERAL_STRING, t[1:-1])
+				self.ltokens[i] += (TokenType.LITERAL_STRING, t[1:-1])
 
 			else:
-				self.ltokens[i].append(TokenType.EXPRESSION, t)
+				self.ltokens[i] += (TokenType.EXPRESSION, t)
 
 	def address_argument(self, t, i):
 		addr = 0
@@ -324,7 +327,7 @@ class ByteOutput():
 	
 
 def parsing_control(data, ln):
-	
+	pass
  
 
 				
