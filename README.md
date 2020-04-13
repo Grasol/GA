@@ -1,3 +1,3 @@
-<h3>GA - Grasol Arhcitecture</h3>
+<h3>GA - Grasol Architecture</h3>
 
 ...
