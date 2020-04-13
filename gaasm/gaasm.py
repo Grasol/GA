@@ -1,84 +1,73 @@
-# Copyright 2019 Grasol
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# opcode | r dst | r src | imm8 ; imm16
-#dunder
-
-import os
+from grammar import grammar
 import sys
-#import string
-#import struct 
-from syntax import *
-from parsing import *
-#import modgrammar
+import os
+
+class GAASMException(Exception):
+	def __init__(self, f_name):
+		self.f_name = f_name
+		self.errors = []
+		self.store_result = True
+		# if throwed at least one error (no warning), gaasm will not store bytecode
+		# resultat
+	
+	def fatalError(self, context):
+		raise GAASMException(f"{self.f_name}:fatal error: {context}")
+	
+	def addError(self, ln_no, type_error, context):
+		self.errors.append(f"{self.f_name}:{ln_no}:{type_error}: {context}")
+		if type_error == "error":
+			self.store_result = False
+
+	def printError(self):
+		if self.store_result:
+			return True
+
+		for err in self.errors:
+			sys.stderr.write(f"{err}\n")
+
+		return False
 
 
+class Assembler:
+	def __init__(self, in_f_name):
+		self.grm = grammar
+		self.err = GAASMException(in_f_name)
 
-class Assembler():
-	def __init__(self, data):
-		self.output = bytearray(0)
-		self.synx = Syntax(data)
-		self.pars = Tokens_Parser()
-
-	def errasm(self,errs):
-		self.errs.append(errs)
+		self.output = []
 
 	def phase1(self):
-		self.data = self.synx.get_data()
-		self.ln = self.synx.get_ln()
-		self.errs = self.synx.get_err()
-		
-		print("--------------------------------")
-		for l in range(len(self.data)) :
-			print(self.ln[l], self.data[l])
+		return self.grm(self.err, self.data)
 
-		self.data = self.pars.start_parsing(self.data)
-	
-		for d in self.data:
-			print(d)
+	def run(self, data):
+		self.data = data
+		ln, ind = self.phase1()
+		for i in range(len(ind)):
+			print(ind[i], ln[i])
 		
 
-		#print(self.data)
-
-		"""self.out = parsing_control(self.data, self.ln)
-		self.errs += self.out[0]
-		self.errs.sort()
-		for er in self.errs:
-			print(er)
-
-		print(self.out[1])"""
-		
+		#self.phase2()
+		if self.err.printError():
+			#return self.phase3()
+			pass
 
 
-
-	
 def main():
-	if len(sys.argv) != 2 :
-		sys.exit("Usege: gaasm [name_file.txt]") #JAK PODANO ZŁE INFO, WYWALA NA STARCIE
-	if sys.argv[1] == "/?":
-		sys.exit("Compiler Grasol Architecture Asembler (gaasm) v? . Grasol 2019\nInstruction manual is on website: https://github.com/Grasol/GAASM-Grasol-Architecture- 'Grasol_CPU_Manual.pdf'")
+	if len(sys.argv) != 2:
+		sys.exit("usege: gaasm.py <file_name.asm>")
 
-	infilename = sys.argv[1]
-	with open(infilename) as f:
+	in_f_name = sys.argv[1]
+	#out_f_name = os.path.splittext(in_f_name)[0] + ".bin"
+
+	with open(in_f_name, "r") as f:
 		data = f.read()
 
-		f.close()
-	
-		asm = Assembler(data)
-		asm.phase1()
+	asm = Assembler(in_f_name)
+	bytecode = asm.run(data)
+	if type(bytecode) is None:
+		sys.exit(1)
 
+	#with open(out_f_name, "wb") as f:
+	#	f.write(bytecode)
 
 if __name__ == "__main__":
 	main()
-
